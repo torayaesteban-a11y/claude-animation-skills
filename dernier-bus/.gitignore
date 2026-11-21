@@ -1,0 +1,9 @@
+.venv/
+node_modules
+audio/
+stills/
+__pycache__/
+captions.ass
+timeline.json
+silent.mp4
+mix.wav
