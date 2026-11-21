@@ -193,18 +193,15 @@ const driver = person(cabin,0x243347,0xc3a79d,true,true,0x1a2539);
 driver.actor.position.set(-.85,.19,-5.17); driver.actor.rotation.y=Math.PI;
 const riderBehind = person(cabin,0xa05640,0xb8785b,false,false,0x222438);
 riderBehind.actor.position.set(2.8,0,-5.26); riderBehind.actor.rotation.y=-Math.PI/2;
-const reflection = person(mirror,0x28384a,0xb3a49d,true,true,0x161c2c);
-for(const part of [...reflection.actor.children]) {
-  if(part!==reflection.head && part!==reflection.body) reflection.actor.remove(part);
-}
-reflection.actor.scale.set(.44,.44,.3); reflection.actor.position.set(.025,-.585,.06);
-reflection.body.position.y=.96; reflection.body.scale.set(.89,.71,.56); orb(reflection.actor,0xc2a29a,0,1.245,.012,.067,.11,.066);
-const glassBounds=[new T.Plane(new T.Vector3(0,1,0),-(2.19-.123)),new T.Plane(new T.Vector3(0,-1,0),2.19+.123)];
-reflection.actor.traverse(part=>{
-  if(!part.isMesh)return;
-  part.material=part.material.clone();
-  part.material.clippingPlanes=glassBounds;
-});
+// The mirror samples the actual driver's seat, including the aisle behind it.
+const mirrorTarget=new T.WebGLRenderTarget(768,300);
+const mirrorCamera=new T.PerspectiveCamera(36,768/300,.03,60);
+const mirrorPane=mesh(mirror,new T.PlaneGeometry(.758,.252),new T.MeshBasicMaterial({
+  map:mirrorTarget.texture,color:0xd2dfdf,toneMapped:false
+}),[0,0,.048]);
+mirrorPane.geometry.attributes.uv.array.forEach((v,i,uv)=>{if(i%2===0)uv[i]=1-v;});
+const cap=orb(driver.head,0x242d3c,0,.128,-.01,.155,.085,.145);
+const brim=orb(driver.head,0x172230,0,.093,.089,.148,.021,.11);
 const passengers=[];
 const colors=[0x3c536e,0x673649,0x79705c,0x3e6467,0x513657,0x75634e,0x4e535f,0x6b4c43];
 for(let i=0;i<8;i++){
@@ -236,10 +233,44 @@ for(const side of [-1,1]) for(let row=0;row<6;row++){
 }
 
 const scarf=new T.Group(); cabin.add(scarf);
-const knot=mesh(scarf,new T.TorusGeometry(.122,.036,10,28),mat(0xa92439),[0,.016,0]);
-knot.rotation.x=Math.PI/2; knot.scale.y=.79;
-box(scarf,0xbe2838,.045,-.020,.107,.084,.020,.28).rotation.y=-.3;
-box(scarf,0xf5a260,.013,-.008,.214,.082,.006,.019);
+// A single knitted strip wraps the neck and uncoils across the cushion.
+const steps=68, ribbon=new T.PlaneGeometry(1,1,1,steps);
+const yarn=document.createElement('canvas'); yarn.width=48; yarn.height=256;
+const yg=yarn.getContext('2d');
+yg.fillStyle='#942c38'; yg.fillRect(0,0,48,256);
+for(const y of [10,18,228,236]){ yg.fillStyle='#d9a773';yg.fillRect(0,y,48,4); }
+for(let y=0;y<256;y+=4)for(let x=0;x<48;x+=4){
+  yg.fillStyle=(x+y)%8?'#ffffff24':'#150b212e';yg.fillRect(x,y,2,3);
+}
+const weave=new T.CanvasTexture(yarn);weave.colorSpace=T.SRGBColorSpace;
+const textile=mesh(scarf,ribbon,new T.MeshStandardMaterial({map:weave,roughness:1,side:T.DoubleSide}),[0,0,0]);
+textile.frustumCulled=false;
+const neckWorld=new T.Vector3();
+function drape(t){
+  const descent=range(t,22.30,22.83);
+  const relax=smooth(range(t,22.32,23.03));
+  victim.actor.localToWorld(neckWorld.set(0,1.184,.0));
+  scarf.position.copy(neckWorld);
+  scarf.position.x+=(-.96-neckWorld.x)*smooth(descent);
+  scarf.position.z+=(-2.27-neckWorld.z)*smooth(descent);
+  scarf.position.y+=(.675-neckWorld.y)*descent*descent;
+  const attr=ribbon.attributes.position;
+  for(let i=0;i<=steps;i++){
+    const u=i/steps, angle=(u/.73)*Math.PI*2+.2;
+    const tail=Math.max(0,(u-.73)/.27);
+    const theta=Math.min(angle,Math.PI*2+.2);
+    for(let side=0;side<2;side++){
+      const edge=(side-.5)*.066;
+      const x=Math.sin(theta)*.132+tail*.052+tail*edge;
+      const y=edge*(1-tail)-tail*.256;
+      const z=-Math.cos(theta)*.16-tail*.047;
+      const flatX=(u-.5)*.49;
+      const flatZ=Math.sin(u*5.8)*.085+edge*1.4;
+      attr.setXYZ(i*2+side,x+(flatX-x)*relax,y*(1-relax)+(.009+.013*Math.sin(u*10)**2)*relax,z+(flatZ-z)*relax);
+    }
+  }
+  attr.needsUpdate=true; ribbon.computeVertexNormals();
+}
 const hands=new T.Group(); cabin.add(hands);
 for(const side of [-1,1]){
   rod(hands,0xa05640,[-.85+side*.24,.8,-4.87],[-.85+side*.22,1.17,-5.47],.079);
@@ -284,11 +315,11 @@ const shots=[
   [8.35,12.85,[.02,1.67,-4.70],[.11,1.72,-3.48],[0,1.16,1],[.20,1.24,1.0],63],
   [12.85,16.65,[.11,1.56,1.85],[.24,1.55,1.67],[.92,1.38,3.08],[.94,1.39,3.08],43],
   [16.65,19.2,[.14,1.42,-3.15],[-.05,1.46,-3.55],[-.94,1.36,-2.23],[-.82,1.43,-2.25],47],
-  [19.2,22.15,[.12,1.91,-3.72],[.01,2.05,-4.47],[-.15,2.21,-5.52],[-.18,2.18,-5.52],43],
+  [19.2,22.15,[.12,1.91,-3.72],[.01,2.05,-4.47],[-.15,2.21,-5.52],[-.18,2.18,-5.52],53],
   [22.15,27.35,[-.15,1.42,-3.50],[-.31,1.23,-3.10],[-.94,1.14,-2.21],[-.92,.66,-2.09],49],
   [27.35,32.3,[.03,1.47,-2.72],[.29,1.26,-4.36],[.89,.43,-5.48],[1.64,.72,-5.29],50],
   [32.3,36.9,[-.81,1.92,-4.75],[-.86,1.79,-4.84],[-.85,1.28,-5.49],[-.85,1.25,-5.46],53],
-  [36.9,41.05,[-.81,1.89,-4.78],[-.27,2.12,-4.86],[-.18,2.18,-5.52],[-.18,2.18,-5.52],47],
+  [36.9,41.05,[-.81,1.89,-4.78],[-.27,2.12,-4.86],[-.18,2.18,-5.52],[-.18,2.18,-5.52],58],
   [41.05,45,[.95,1.57,-5.77],[.53,1.62,-5.48],[2.83,1.53,-5.30],[1.95,1.50,-5.26],55]
 ];
 function setScene(t){
@@ -303,10 +334,9 @@ function setScene(t){
   tubes.forEach((tube,i)=>{tube.visible = dark < .72 && !(t>7.95 && t<8.36 && Math.floor(t*28+i)%3===0);});
   driver.actor.visible = t>=8.35 && t<32.3;
   driver.head.rotation.y=-.12-smooth(range(t,18,21))*.45;
-  glass.material.color.setHex(t>=36.9 ? 0x59424f : 0x34465e);
-  reflection.actor.visible = (t>=19.2 && t<22.15) || (t>=36.9 && t<41.05);
-  reflection.body.material.color.setHex(t>=36.9?0xa05640:0x28384a);
-  reflection.head.rotation.y=.2*Math.sin(t);
+  mirrorPane.visible=(t>=19.2 && t<22.15)||(t>=36.9 && t<41.05);
+  cap.visible=brim.visible=t<32.3;
+  driver.body.material=mat(t>=32.3?0xa05640:0x243347);
   passengers.forEach((p,i)=>{
     p.actor.visible=t>=8.35 && t<32.3 && (p!==victim || t<22.3);
     p.head.rotation.y=.1*Math.sin(t*.8+i);
@@ -318,7 +348,7 @@ function setScene(t){
   victim.actor.position.x=-.95+lean*.36;
   victim.actor.rotation.z=-lean*.19;
   scarf.visible = t>=16.65 && t<27.35;
-  scarf.position.set(t<22.3?-.95+lean*.36:-.96,t<22.3?1.19:.665,t<22.3?-2.24:-2.18);
+  if(scarf.visible)drape(t);
   hands.visible=t>=32.3 && t<36.9;
   riderBehind.actor.visible=t>=41.05;
   const walk=smooth(range(t,41.55,44.65));
@@ -348,6 +378,18 @@ window.renderAt=(t)=>{
   pos[0]+=.012*Math.sin(t*3.1); pos[1]+=.008*Math.sin(t*4.6);
   camera.fov=fov; camera.updateProjectionMatrix();
   place(camera,pos,look,.011*Math.sin(t*1.9));
+  if(mirrorPane.visible){
+    mirror.visible=false;
+    const visible=driver.actor.visible;
+    driver.actor.visible=true;
+    mirrorCamera.position.set(-.72+(camera.position.x+.2)*.045,1.73,-6.02);
+    mirrorCamera.lookAt(-.85,1.55,-5.17);
+    renderer.setRenderTarget(mirrorTarget);
+    renderer.render(scene,mirrorCamera);
+    renderer.setRenderTarget(null);
+    driver.actor.visible=visible;
+    mirror.visible=true;
+  }
   renderer.render(scene,camera);
   return renderer.domElement.toDataURL('image/jpeg',.91).split(',')[1];
 };

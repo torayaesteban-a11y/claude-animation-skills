@@ -1,12 +1,42 @@
 [
-[0.45, "À trois heures pile, j’ai pris le dernier bus. Il était complètement vide."],
-[5.30, "Sous le tunnel, les néons se sont éteints."],
-[8.35, "Quand ils se sont rallumés, presque toutes les places étaient prises."],
-[12.85, "Une femme a murmuré : ne regarde surtout pas le chauffeur."],
-[16.65, "Trop tard. Un homme s’est penché. Dans le rétro, le chauffeur n’avait pas de visage."],
-[22.15, "Le néon a claqué. Il ne restait que l’écharpe de l’homme sur son siège."],
-[27.35, "J’ai baissé les yeux. Au terminus, j’ai enfin entendu les portes s’ouvrir."],
-[32.30, "J’ai voulu sortir. Mais le volant était déjà entre mes mains."],
-[36.90, "Dans le rétro, j’ai reconnu mon manteau. Mon visage avait disparu."],
-[41.05, "Les portes se sont ouvertes. Et je me suis vu monter."]
+  [
+    0.45,
+    "Trois heures du matin. Je monte dans le dernier bus. Personne."
+  ],
+  [
+    5.3,
+    "On entre dans un tunnel. Les néons lâchent."
+  ],
+  [
+    8.35,
+    "La lumière revient. Il y a quelqu’un sur chaque siège."
+  ],
+  [
+    12.85,
+    "Tout près de mon oreille, une femme souffle : baisse les yeux."
+  ],
+  [
+    16.65,
+    "Un homme se penche. Il regarde le chauffeur dans le rétro. À la place du visage, rien."
+  ],
+  [
+    22.15,
+    "Un claquement. Son écharpe tombe sur le siège. L’homme a disparu."
+  ],
+  [
+    27.35,
+    "Je fixe mes chaussures jusqu’au terminus. Enfin, les portes s’ouvrent."
+  ],
+  [
+    32.3,
+    "Je veux me lever. Mes mains serrent déjà le volant."
+  ],
+  [
+    36.9,
+    "Dans le rétro, ce manteau, c’est le mien. Et ce visage vide aussi."
+  ],
+  [
+    41.05,
+    "Quelqu’un monte. Même manteau. Même démarche. C’est moi."
+  ]
 ]
